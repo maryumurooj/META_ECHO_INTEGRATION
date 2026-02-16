@@ -3,8 +3,6 @@ import requests
 import json
 import os
 from dotenv import load_dotenv
-from apscheduler.schedulers.background import BackgroundScheduler
-import atexit
 
 # Load environment variables
 load_dotenv()
@@ -16,29 +14,6 @@ VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
 WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
 PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
 WHATSAPP_API_URL = f"https://graph.facebook.com/v18.0/{PHONE_NUMBER_ID}/messages"
-RENDER_URL = os.getenv("RENDER_URL", "")  # Your Render app URL
-
-# ========== KEEP-ALIVE FUNCTION ==========
-def keep_alive():
-    if RENDER_URL:
-        try:
-            response = requests.get(f"{RENDER_URL}/health", timeout=10)
-            print(f"[KEEP-ALIVE] Ping successful: {response.status_code}")
-        except Exception as e:
-            print(f"[KEEP-ALIVE] Ping failed: {e}")
-
-# ========== SCHEDULER SETUP ==========
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=keep_alive, trigger="interval", minutes=10)  # Ping every 10 minutes
-scheduler.start()
-
-# Shut down the scheduler when exiting the app
-atexit.register(lambda: scheduler.shutdown())
-
-# ========== HEALTH CHECK ENDPOINT ==========
-@app.route('/health', methods=['GET'])
-def health_check():
-    return {'status': 'alive', 'service': 'XIT Law WhatsApp Bot'}, 200
 
 # ========== WEBHOOK VERIFICATION ==========
 @app.route('/webhook', methods=['GET'])
@@ -120,7 +95,6 @@ if __name__ == '__main__':
     print(f"📡 Local: http://127.0.0.1:5000/webhook")
     print(f"🔑 Verify Token: {VERIFY_TOKEN}")
     print(f"📱 Phone Number ID: {PHONE_NUMBER_ID}")
-    print(f"⏰ Keep-Alive: {'Enabled' if RENDER_URL else 'Disabled (set RENDER_URL)'}")
     print("="*60 + "\n")
     
     port = int(os.environ.get("PORT", 5000))
